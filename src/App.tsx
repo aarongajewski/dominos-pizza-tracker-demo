@@ -4,7 +4,7 @@ import { MenuScreen } from "./components/MenuScreen";
 import { CheckoutScreen } from "./components/CheckoutScreen";
 import { TrackerScreen } from "./components/TrackerScreen";
 import { DebugPanel } from "./components/DebugPanel";
-import { buildOrder, cannedCart, cannedCustomer, newPizza } from "./lib/order";
+import { buildOrder, cannedCart, cannedCustomer, newPizza, round2 } from "./lib/order";
 import type { CartPizza, CustomerInfo, Order, Screen, TrackerStatus } from "./types";
 
 type Theme = "light" | "dark";
@@ -83,8 +83,8 @@ export function App() {
     return () => clearInterval(t);
   }, [screen, autoAdvance, status, advance]);
 
-  const placeOrder = useCallback((customer: CustomerInfo) => {
-    setOrder(buildOrder(cart, customer));
+  const placeOrder = useCallback((customer: CustomerInfo, tip: number) => {
+    setOrder(buildOrder(cart, customer, tip));
     setStatus("received");
     setScreen("tracker");
   }, [cart]);
@@ -92,7 +92,9 @@ export function App() {
   const loadCannedOrder = useCallback(() => {
     const c = cannedCart();
     setCart(c);
-    setOrder(buildOrder(c, cannedCustomer()));
+    // Default demo tip: 18% of subtotal (matches checkout default).
+    const draft = buildOrder(c, cannedCustomer(), 0);
+    setOrder(buildOrder(c, cannedCustomer(), round2(draft.subtotal * 0.18)));
     setStatus("received");
     setScreen("tracker");
   }, []);

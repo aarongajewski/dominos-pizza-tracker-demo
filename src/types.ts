@@ -52,6 +52,8 @@ export interface Order {
   subtotal: number;
   deliveryFee: number;
   tax: number;
+  /** Tip amount in dollars (computed from subtotal % or custom). */
+  tip: number;
   total: number;
   placedAt: number;
   /** Total minutes the demo pretends the order will take. */
