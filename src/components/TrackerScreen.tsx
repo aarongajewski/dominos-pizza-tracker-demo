@@ -152,6 +152,10 @@ export function TrackerScreen({
               <span>Tax</span>
               <span>${order.tax.toFixed(2)}</span>
             </div>
+            <div className="summary-row">
+              <span>Tip</span>
+              <span>${(order.tip ?? 0).toFixed(2)}</span>
+            </div>
             <div className="summary-total">
               <span>Total</span>
               <span>${order.total.toFixed(2)}</span>

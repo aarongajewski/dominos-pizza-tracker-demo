@@ -65,15 +65,17 @@ export function newPizza(): CartPizza {
   };
 }
 
-/** Build a finalized Order from a cart + customer info. */
+/** Build a finalized Order from a cart + customer info + tip (dollars). */
 export function buildOrder(
   pizzas: CartPizza[],
-  customer: CustomerInfo
+  customer: CustomerInfo,
+  tip = 0
 ): Order {
   const subtotal = round2(cartSubtotal(pizzas));
   const deliveryFee = customer.mode === "delivery" ? DELIVERY_FEE : 0;
   const tax = round2(subtotal * TAX_RATE);
-  const total = round2(subtotal + deliveryFee + tax);
+  const tipAmount = round2(Math.max(0, tip));
+  const total = round2(subtotal + deliveryFee + tax + tipAmount);
   return {
     id: makeOrderNumber(),
     pizzas,
@@ -81,6 +83,7 @@ export function buildOrder(
     subtotal,
     deliveryFee,
     tax,
+    tip: tipAmount,
     total,
     placedAt: Date.now(),
     etaMinutes: customer.mode === "delivery" ? 30 : 18,
