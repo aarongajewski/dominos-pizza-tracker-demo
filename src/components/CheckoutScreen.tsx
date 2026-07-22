@@ -3,28 +3,41 @@ import { DELIVERY_FEE, TAX_RATE } from "../data/menu";
 import { cartSubtotal, pizzaLabel, pizzaPrice, round2, toppingLabels } from "../lib/order";
 import type { CartPizza, CustomerInfo } from "../types";
 
+type TipPreset = 15 | 18 | 20 | 0 | "custom";
+
 interface CheckoutScreenProps {
   cart: CartPizza[];
   onBack: () => void;
-  onPlaceOrder: (customer: CustomerInfo) => void;
+  onPlaceOrder: (customer: CustomerInfo, tip: number) => void;
 }
 
 export function CheckoutScreen({ cart, onBack, onPlaceOrder }: CheckoutScreenProps) {
   const [name, setName] = useState("Alex Rivera");
   const [mode, setMode] = useState<"delivery" | "carryout">("delivery");
   const [address, setAddress] = useState("30 Domino Farms Blvd, Ann Arbor, MI");
+  const [tipPreset, setTipPreset] = useState<TipPreset>(18);
+  const [customTip, setCustomTip] = useState("");
 
   const subtotal = round2(cartSubtotal(cart));
   const deliveryFee = mode === "delivery" ? DELIVERY_FEE : 0;
   const tax = round2(subtotal * TAX_RATE);
-  const total = round2(subtotal + deliveryFee + tax);
+  const tip =
+    tipPreset === "custom"
+      ? round2(Math.max(0, Number.parseFloat(customTip) || 0))
+      : round2(subtotal * (tipPreset / 100));
+  const total = round2(subtotal + deliveryFee + tax + tip);
 
   const addressNeeded = mode === "delivery";
   const canPlace = name.trim().length > 0 && (!addressNeeded || address.trim().length > 0);
 
   const submit = () => {
     if (!canPlace) return;
-    onPlaceOrder({ name: name.trim(), address: address.trim(), mode });
+    onPlaceOrder({ name: name.trim(), address: address.trim(), mode }, tip);
+  };
+
+  const selectPreset = (preset: TipPreset) => {
+    setTipPreset(preset);
+    if (preset !== "custom") setCustomTip("");
   };
 
   return (
@@ -92,6 +105,64 @@ export function CheckoutScreen({ cart, onBack, onPlaceOrder }: CheckoutScreenPro
             </div>
           )}
 
+          <div className="field">
+            <label className="field-label">Tip</label>
+            <div className="chip-row chip-row-wrap">
+              <button
+                type="button"
+                className={`chip ${tipPreset === 15 ? "chip-active" : ""}`}
+                onClick={() => selectPreset(15)}
+              >
+                15%
+                <span className="chip-meta">${round2(subtotal * 0.15).toFixed(2)}</span>
+              </button>
+              <button
+                type="button"
+                className={`chip ${tipPreset === 18 ? "chip-active" : ""}`}
+                onClick={() => selectPreset(18)}
+              >
+                18%
+                <span className="chip-meta">${round2(subtotal * 0.18).toFixed(2)}</span>
+              </button>
+              <button
+                type="button"
+                className={`chip ${tipPreset === 20 ? "chip-active" : ""}`}
+                onClick={() => selectPreset(20)}
+              >
+                20%
+                <span className="chip-meta">${round2(subtotal * 0.2).toFixed(2)}</span>
+              </button>
+              <button
+                type="button"
+                className={`chip ${tipPreset === 0 ? "chip-active" : ""}`}
+                onClick={() => selectPreset(0)}
+              >
+                No tip
+              </button>
+              <button
+                type="button"
+                className={`chip ${tipPreset === "custom" ? "chip-active" : ""}`}
+                onClick={() => selectPreset("custom")}
+              >
+                Custom
+              </button>
+            </div>
+            {tipPreset === "custom" && (
+              <input
+                id="custom-tip"
+                className="text-input"
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={customTip}
+                onChange={(e) => setCustomTip(e.target.value)}
+                placeholder="Tip amount ($)"
+                style={{ marginTop: 10 }}
+              />
+            )}
+          </div>
+
           <p className="muted small">
             This is a demo — no payment is collected and no data leaves your browser.
           </p>
@@ -128,6 +199,10 @@ export function CheckoutScreen({ cart, onBack, onPlaceOrder }: CheckoutScreenPro
             <div className="summary-row">
               <span>Tax</span>
               <span>${tax.toFixed(2)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Tip</span>
+              <span>${tip.toFixed(2)}</span>
             </div>
           </div>
 
